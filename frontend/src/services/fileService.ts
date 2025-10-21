@@ -30,7 +30,8 @@ export const fileService = {
 
 // Download file
   async downloadFile(fileId: number): Promise<Blob> {
-    const response = await api.get(`/files/${fileId}/download`, {
+    const token = localStorage.getItem('token');
+    const response = await api.get(`/files/${fileId}/download?token=${token}`, {
       responseType: 'blob',
     });
     return response.data;

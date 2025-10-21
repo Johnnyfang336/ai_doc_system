@@ -41,7 +41,7 @@ services:
       - PORT=8080
       - GIN_MODE=release
     volumes:
-      - backend_storage:/root/storage
+      - backend_storage:/home/appuser/storage
     ports:
       - "8080:8080"
     networks:
@@ -75,6 +75,32 @@ services:
       timeout: 10s
       retries: 3
 
+  # OnlyOffice Document Server
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: ai_doc_onlyoffice
+    environment:
+      - JWT_ENABLED=false
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-your-onlyoffice-jwt-secret}
+      - WOPI_ENABLED=false
+      - USE_UNAUTHORIZED_STORAGE=true
+      - ALLOW_PRIVATE_IP_ADDRESS=true
+      - ALLOW_META_IP_ADDRESS=true
+    ports:
+      - "8081:80"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_log:/var/log/onlyoffice
+      - onlyoffice_cache:/var/lib/onlyoffice
+    networks:
+      - ai_doc_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Nginx reverse proxy (optional, for production environment)
   nginx:
     image: nginx:alpine
@@ -97,6 +123,12 @@ volumes:
   postgres_data:
     driver: local
   backend_storage:
+    driver: local
+  onlyoffice_data:
+    driver: local
+  onlyoffice_log:
+    driver: local
+  onlyoffice_cache:
     driver: local
 
 networks:

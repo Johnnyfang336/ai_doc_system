@@ -4,17 +4,14 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package.json
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
+# Copy source code first
 COPY . .
 
-# Build application
-RUN npm run build
+# Install dependencies and build
+RUN npm install && npm run build
 
 # Use nginx as production environment
 FROM nginx:alpine

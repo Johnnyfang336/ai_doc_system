@@ -328,7 +328,7 @@ sudo certbot certonly --standalone -d your-domain.com
    docker volume ls
    
    # Check permissions
-   docker-compose exec backend ls -la /root/storage
+   docker-compose exec backend ls -la /home/storage
    ```
 
 4. **Out of memory**

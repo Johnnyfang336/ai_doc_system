@@ -33,11 +33,10 @@ export interface AuthResponse {
 export interface FileItem {
   id: number;
   original_name: string;
-  file_name: string;
-  path: string;
-  size: number;
+  filename: string;
+  file_path: string;
+  file_size: number;
   mime_type: string;
-  hash: string;
   user_id: number;
   created_at: string;
   updated_at: string;

@@ -50,11 +50,11 @@ func (s *FileService) UploadFile(userID int, file *multipart.FileHeader) (*model
 	// Save file information to database
 	var fileModel models.File
 	err = s.db.QueryRow(`
-		INSERT INTO files (filename, file_path, file_size, mime_type, user_id) 
-		VALUES ($1, $2, $3, $4, $5) 
-		RETURNING id, filename, file_path, file_size, mime_type, user_id, created_at, updated_at`,
-		fileName, filePath, file.Size, file.Header.Get("Content-Type"), userID).Scan(
-		&fileModel.ID, &fileModel.Filename, &fileModel.FilePath,
+		INSERT INTO files (filename, original_name, file_path, file_size, mime_type, user_id) 
+		VALUES ($1, $2, $3, $4, $5, $6) 
+		RETURNING id, filename, original_name, file_path, file_size, mime_type, user_id, created_at, updated_at`,
+		fileName, file.Filename, filePath, file.Size, file.Header.Get("Content-Type"), userID).Scan(
+		&fileModel.ID, &fileModel.Filename, &fileModel.OriginalName, &fileModel.FilePath,
 		&fileModel.FileSize, &fileModel.MimeType, &fileModel.UserID,
 		&fileModel.CreatedAt, &fileModel.UpdatedAt)
 	
@@ -79,7 +79,7 @@ func (s *FileService) UploadFile(userID int, file *multipart.FileHeader) (*model
 
 func (s *FileService) GetUserFiles(userID int) ([]models.File, error) {
 	rows, err := s.db.Query(`
-		SELECT id, filename, file_path, file_size, mime_type, user_id, created_at, updated_at 
+		SELECT id, filename, original_name, file_path, file_size, mime_type, user_id, created_at, updated_at 
 		FROM files WHERE user_id = $1 ORDER BY created_at DESC`, userID)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *FileService) GetUserFiles(userID int) ([]models.File, error) {
 	var files []models.File
 	for rows.Next() {
 		var file models.File
-		err := rows.Scan(&file.ID, &file.Filename, &file.FilePath,
+		err := rows.Scan(&file.ID, &file.Filename, &file.OriginalName, &file.FilePath,
 			&file.FileSize, &file.MimeType, &file.UserID,
 			&file.CreatedAt, &file.UpdatedAt)
 		if err != nil {
@@ -104,9 +104,9 @@ func (s *FileService) GetUserFiles(userID int) ([]models.File, error) {
 func (s *FileService) GetFileByID(fileID int) (*models.File, error) {
 	var file models.File
 	err := s.db.QueryRow(`
-		SELECT id, filename, file_path, file_size, mime_type, user_id, created_at, updated_at 
+		SELECT id, filename, original_name, file_path, file_size, mime_type, user_id, created_at, updated_at 
 		FROM files WHERE id = $1`, fileID).Scan(
-		&file.ID, &file.Filename, &file.FilePath,
+		&file.ID, &file.Filename, &file.OriginalName, &file.FilePath,
 		&file.FileSize, &file.MimeType, &file.UserID,
 		&file.CreatedAt, &file.UpdatedAt)
 	
@@ -155,9 +155,9 @@ func (s *FileService) RenameFile(fileID, userID int, newName string) error {
 		return errors.New("permission denied")
 	}
 	
-	// Update filename
+	// Update original_name (the displayed name)
 	_, err = s.db.Exec(`
-		UPDATE files SET filename = $1, updated_at = CURRENT_TIMESTAMP 
+		UPDATE files SET original_name = $1, updated_at = CURRENT_TIMESTAMP 
 		WHERE id = $2`, newName, fileID)
 	
 	return err
@@ -165,7 +165,7 @@ func (s *FileService) RenameFile(fileID, userID int, newName string) error {
 
 func (s *FileService) GetAllFiles() ([]models.File, error) {
 	rows, err := s.db.Query(`
-		SELECT f.id, f.filename, f.file_path, f.file_size, f.mime_type, 
+		SELECT f.id, f.filename, f.original_name, f.file_path, f.file_size, f.mime_type, 
 		       f.user_id, f.created_at, f.updated_at, u.username
 		FROM files f 
 		JOIN users u ON f.user_id = u.id 
@@ -179,7 +179,7 @@ func (s *FileService) GetAllFiles() ([]models.File, error) {
 	for rows.Next() {
 		var file models.File
 		var username string
-		err := rows.Scan(&file.ID, &file.Filename, &file.FilePath,
+		err := rows.Scan(&file.ID, &file.Filename, &file.OriginalName, &file.FilePath,
 			&file.FileSize, &file.MimeType, &file.UserID,
 			&file.CreatedAt, &file.UpdatedAt, &username)
 		if err != nil {

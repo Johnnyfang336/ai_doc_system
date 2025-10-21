@@ -41,7 +41,7 @@ func SetupRouter(db *sql.DB, jwtSecret string) *gin.Engine {
 	userHandler := NewUserHandler(userService, jwtSecret)
 	
 	fileService := services.NewFileService(db, "storage/files")
-	fileHandler := NewFileHandler(fileService)
+	fileHandler := NewFileHandler(fileService, jwtSecret)
 	
 	friendService := services.NewFriendService(db)
 	friendHandler := NewFriendHandler(friendService)
@@ -52,6 +52,8 @@ func SetupRouter(db *sql.DB, jwtSecret string) *gin.Engine {
 	fileShareService := services.NewFileShareService(db)
 	fileShareHandler := NewFileShareHandler(fileShareService, fileService)
 	
+	onlyOfficeHandler := NewOnlyOfficeHandler(jwtSecret, fileService)
+	
 	// User authentication routes (no authentication required)
 	authGroup := r.Group("/api/auth")
 	{
@@ -61,6 +63,16 @@ func SetupRouter(db *sql.DB, jwtSecret string) *gin.Engine {
 	
 	// Public shared file download (no authentication required)
 	r.GET("/api/share/:token", fileShareHandler.DownloadSharedFile)
+	
+	// File edit, preview and download endpoints with their own auth logic for iframe support
+	r.GET("/api/files/:id/edit", fileHandler.EditFile)
+	r.GET("/api/files/:id/preview", fileHandler.PreviewFile)
+	r.GET("/api/files/:id/download", fileHandler.DownloadFile)
+	
+	// OnlyOffice integration endpoints
+	r.GET("/api/onlyoffice/config/:id", onlyOfficeHandler.GetOnlyOfficeConfig)
+	r.GET("/api/files/:id/onlyoffice/config", onlyOfficeHandler.GetOnlyOfficeConfig)
+	r.POST("/api/onlyoffice/callback", onlyOfficeHandler.HandleCallback)
 	
 	// Protected routes (authentication required)
 	protected := r.Group("/api")
@@ -74,7 +86,6 @@ func SetupRouter(db *sql.DB, jwtSecret string) *gin.Engine {
 		protected.POST("/files/upload", fileHandler.UploadFile)
 		protected.GET("/files", fileHandler.GetUserFiles)
 		protected.GET("/files/:id", fileHandler.GetFile)
-		protected.GET("/files/:id/download", fileHandler.DownloadFile)
 		protected.DELETE("/files/:id", fileHandler.DeleteFile)
 		protected.PUT("/files/:id/rename", fileHandler.RenameFile)
 		protected.GET("/storage/usage", fileHandler.GetStorageUsage)

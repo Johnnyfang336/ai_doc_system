@@ -5,14 +5,15 @@ import (
 )
 
 type File struct {
-	ID        int       `json:"id" db:"id"`
-	UserID    int       `json:"user_id" db:"user_id"`
-	Filename  string    `json:"filename" db:"filename"`
-	FilePath  string    `json:"file_path" db:"file_path"`
-	FileSize  int64     `json:"file_size" db:"file_size"`
-	MimeType  string    `json:"mime_type" db:"mime_type"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	ID           int       `json:"id" db:"id"`
+	UserID       int       `json:"user_id" db:"user_id"`
+	Filename     string    `json:"filename" db:"filename"`           
+	OriginalName string    `json:"original_name" db:"original_name"` 
+	FilePath     string    `json:"file_path" db:"file_path"`
+	FileSize     int64     `json:"file_size" db:"file_size"`
+	MimeType     string    `json:"mime_type" db:"mime_type"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type FileVersion struct {
